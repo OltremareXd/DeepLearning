@@ -3,6 +3,8 @@ import functools
 import DeepLearning.article_3.Connection as Connection
 import DeepLearning.article_3.Connections as Connections
 import DeepLearning.article_3.Layer as Layer
+
+
 class Network:
     def __init__(self, layers):
         """
@@ -34,7 +36,7 @@ class Network:
         """
         for i in range(iteration):
             for d in range(len(data_set)):
-                self.train_one_sample(labels[d], data_set[d], range)
+                self.train_one_sample(labels[d], data_set[d], rate)
 
     def train_one_sample(self, label, sample, rate):
         """
@@ -99,40 +101,43 @@ class Network:
         for layer in self.layers:
             print(layer)
 
-    def gradient_check(self, network, sample_feature, sample_label):
-        """
-        执行梯度检查
-        network:生成的网络对象
-        sample_feature:输入的样本数据
-        sample_label:输入的标准标签
-        """
 
-        # 计算结果值与标准值的误差，即使用梯度下降的误差的平方计算
-        network_error = lambda v1, v2: \
-            0.5 * functools.reduce(lambda a, b: a+b,
-                                   map(lambda v: (v[0] - v[1]) * (v[0] - v[1]),
-                                       zip(v1, v2)))
+def gradient_check(network, sample_feature, sample_label):
+    """
+    执行梯度检查
+    network:生成的网络对象
+    sample_feature:输入的样本数据
+    sample_label:输入的标准标签
+    """
 
-        # 获取在本次样例中的各层梯度
-        network.get_gradient(sample_label, sample_feature)
+    # 获取在本次样例中的各层梯度
+    network.get_gradient(sample_label, sample_feature)
 
-        # 对每个权重做梯度检查
-        for conn in network.connections.connections:
-            # 获取当前连接的梯度
-            actual_gradient = conn.get_gradient
+    # 对每个权重做梯度检查
+    for conn in network.connections.connections:
+        # 获取当前连接的梯度
+        actual_gradient = conn.get_gradient
 
-            # 将网络误差加一个很小的值
-            epsilon = 0.0001
-            conn.weight += epsilon
-            error1 = network_error(network.predict(sample_feature), sample_label)
+        # 将网络误差加一个很小的值
+        epsilon = 0.0001
+        conn.weight += epsilon
+        error1 = network_error(network.predict(sample_feature), sample_label)
 
-            # 将网络误差减一个很小的值
-            # 因为刚刚已经加过一次，所以这次要减2倍
-            conn.weight -= 2 * epsilon
-            error2 = network_error(network.predict(sample_feature), sample_label)
+        # 将网络误差减一个很小的值
+        # 因为刚刚已经加过一次，所以这次要减2倍
+        conn.weight -= 2 * epsilon
+        error2 = network_error(network.predict(sample_feature), sample_label)
 
-            # 根据极限的定义公式计算期望的梯度值
-            expected_gradient = (error2 - error1) / (2 * epsilon)
+        # 根据极限的定义公式计算期望的梯度值
+        expected_gradient = (error2 - error1) / (2 * epsilon)
 
-            # 比较
-            print('expected gradient: %f \n actual gradient: %f' % (expected_gradient, actual_gradient))
+        # 比较
+        print('expected gradient: %f \n actual gradient: %f' % (expected_gradient, actual_gradient))
+
+
+# 计算结果值与标准值的误差，即使用梯度下降的误差的平方计算
+def network_error():
+    return lambda v1, v2: \
+        0.5 * functools.reduce(lambda a, b: a + b,
+                               map(lambda v: (v[0] - v[1]) * (v[0] - v[1]),
+                                   zip(v1, v2)))
